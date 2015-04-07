@@ -57,10 +57,14 @@ def __html__(self):
 # Django uses StrAndUnicode for classes like Form, BoundField, Widget which
 # have a __unicode__ method which returns escaped html. We replace
 # StrAndUnicode with SafeStrAndUnicode to get the __html__ method.
-class SafeStrAndUnicode(django.utils.encoding.StrAndUnicode):
+@django.utils.encoding.python_2_unicode_compatible
+class SafeStrAndUnicode(object):
     """A class whose __str__ and __html__ returns __unicode__."""
 
     def __html__(self):
+        return six.text_type(self)
+
+    def __str__(self):
         return six.text_type(self)
 
 
@@ -84,12 +88,6 @@ def patch():
         widgets.RadioFieldRenderer,
     )
 
-    for cls in classes:
-        bases = list(cls.__bases__)
-        if django.utils.encoding.StrAndUnicode in bases:
-            idx = bases.index(django.utils.encoding.StrAndUnicode)
-            bases[idx] = SafeStrAndUnicode
-            cls.__bases__ = tuple(bases)
     for cls in classes:
         if not hasattr(cls, '__html__'):
             cls.__html__ = __html__
